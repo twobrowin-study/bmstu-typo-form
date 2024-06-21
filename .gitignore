@@ -1,0 +1,14 @@
+pocketbase
+pb_data
+pb_public
+node_modules/
+.idea
+coverage
+*.lcov
+.eslintcache
+.env
+.env.test
+.vercel
+.DS_Store
+tmp
+*.zip

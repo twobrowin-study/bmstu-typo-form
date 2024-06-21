@@ -1,0 +1,11 @@
+.container {
+    padding-bottom: 2rem;
+}
+
+.form-group {
+    padding-bottom: 0.5rem;
+}
+
+label {
+    padding-bottom: 0.15rem;
+}
