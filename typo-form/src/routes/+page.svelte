@@ -1,13 +1,18 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import PocketBase from "pocketbase";
-    import type { RecordModel } from "pocketbase";
+    import type { RecordModel, RecordListOptions } from "pocketbase";
     import * as XLSX from 'xlsx';
 
     const pb = new PocketBase(`${location.protocol}//${location.host}`);
 
-    async function get_collection(collection_name: string): Promise<RecordModel[]> {
-        return await pb.collection(collection_name).getFullList({sort: "+order"});
+    async function get_collection(order_id: string , collection_name: string, has_order: boolean): Promise<RecordModel[]> {
+        let options: RecordListOptions = {filter: `order_id='${order_id}'`};
+        if (has_order) {
+            options.sort = "+order";
+        }
+        let selected = await pb.collection(collection_name).getList(1, 500, options);
+        return selected.items;
     }
 
     function safeGet(map: Map<string, RecordModel[]>, key: string): RecordModel[] {
@@ -18,112 +23,76 @@
         return res;
     }
 
-    let formats: RecordModel[] = [],
+    let order: RecordModel,
+        formats: RecordModel[] = [],
+        page_nums: RecordModel[] = [],
         fastenings: RecordModel[] = [],
-        colors: RecordModel[] = [],
-        papers: RecordModel[] = [],
-        printers: RecordModel[] = [];
-    onMount(async () => {
-        formats = await get_collection("formats");
-        fastenings = await get_collection("fastenings");
-        colors = await get_collection("colors");
-        papers = await get_collection("papers");
-        printers = await get_collection("printers");
-    });
+        block_papers: RecordModel[] = [],
+        block_colors: RecordModel[] = [],
+        block_departure_elements: RecordModel[] = [],
+        block_printers: RecordModel[] = [],
+        cover_papers: RecordModel[] = [],
+        cover_colors: RecordModel[] = [],
+        cover_departure_elements: RecordModel[] = [],
+        cover_printers: RecordModel[] = [],
+        cover_laminations: RecordModel[] = [];
+    async function update_available_collections(order_id: string) {
+        formats = await get_collection(order_id, "available_formats", true);
+        page_nums = await get_collection(order_id, "avaliable_page_nums", false);
+        fastenings = await get_collection(order_id, "available_fastenings", true);
+        block_papers = await get_collection(order_id, "available_block_papers", true);
+        block_colors = await get_collection(order_id, "available_block_colors", true);
+        block_departure_elements = await get_collection(order_id, "available_block_departure_elements", false);
+        block_printers = await get_collection(order_id, "available_block_printers", true);
+        cover_papers = await get_collection(order_id, "available_cover_papers", true);
+        cover_colors = await get_collection(order_id, "available_cover_colors", true);
+        cover_departure_elements = await get_collection(order_id, "available_cover_departure_elements", false);
+        cover_printers = await get_collection(order_id, "available_cover_printers", true);
+        cover_laminations = await get_collection(order_id, "available_cover_laminations", false);
+    }
 
+    onMount(async () => {
+        order = await pb.collection("orders").create({});
+        await update_available_collections(order.id);
+    });
 
     let orderTitle: string,
         orderExtOrderNum: string,
         orderCirculation: BigInt,
-        orderFormat: RecordModel,
+        orderFormatId: string,
         orderPageNum: BigInt,
-        orderFastening: RecordModel,
-        orderBlockColor: RecordModel,
-        orderCoverColor: RecordModel,
+        orderFasteningId: string,
+        orderBlockColorId: string,
+        orderCoverColorId: string,
         orderBlockDepartureElements: boolean,
         orderCoverDepartureElements: boolean,
-        orderBlockPaper: RecordModel,
-        orderCoverPaper: RecordModel,
-        orderBlockPrinter: RecordModel,
-        orderCoverPrinter: RecordModel,
-        orderCoverLamination: boolean;
-
-    let braceFasteningDisabled = false,
-        braceFasteningDisabledPromt = "";
-    function braceRule() {
-        if (!orderFormat || !orderPageNum) {
-            return
-        }
-        if (orderPageNum > orderFormat.brace_max_pages) {
-            braceFasteningDisabled = true;
-            braceFasteningDisabledPromt = ` - количество страниц превышает ${orderFormat.brace_max_pages} для формата ${orderFormat.name}`;
-        } else {
-            braceFasteningDisabled = false;
-            braceFasteningDisabledPromt = "";
-        }
-    }
-
-    function printerRule(color: RecordModel | undefined, paper: RecordModel | undefined): [boolean, boolean, boolean, string] {
-        let risographPrinterDisable = false,
-            digitalPrinterDisable = false,
-            disableWholeSection = false,
-            printerDisabledPromt = "";
-        
-        if (color) {
-            risographPrinterDisable = !color.is_risograph_available;
-            digitalPrinterDisable = !color.is_digital_available;
-            if (risographPrinterDisable || digitalPrinterDisable) {
-                printerDisabledPromt = ` - недоступно для цветности ${color.name}`;
-            }
-        }
-        
-        if (paper) {
-            risographPrinterDisable = !paper.is_risograph_available;
-            digitalPrinterDisable = !paper.is_digital_available;
-            disableWholeSection = paper.is_empty;
-            if (risographPrinterDisable || digitalPrinterDisable) {
-                printerDisabledPromt = ` - недоступно для бумаги ${paper.name}`;
-            }
-        }
-
-        if (color && paper) {
-            risographPrinterDisable = !(color.is_risograph_available && paper.is_risograph_available);
-            digitalPrinterDisable = !(color.is_digital_available && paper.is_digital_available);
-            var risographPrinterFullPromt = !(color.is_risograph_available || paper.is_risograph_available);
-            var digitalPrinterFullPromt = !(color.is_digital_available || paper.is_digital_available);
-            if (risographPrinterFullPromt || digitalPrinterFullPromt) {
-                printerDisabledPromt = ` - недоступно для цветности ${color.name} и бумаги ${paper.name}`;
-            }
-        }
-
-        return [
-            risographPrinterDisable,
-            digitalPrinterDisable,
-            disableWholeSection,
-            printerDisabledPromt
-        ];
-    }
-
-    let blockRisographPrinterDisable = false,
-        blockDigitalPrinterDisable = false,
-        blockPrinterDisabledPromt = "";
-    function blockPrinterRule() {
-        var ruled_params = printerRule(orderBlockColor, orderBlockPaper);
-        blockRisographPrinterDisable = ruled_params[0];
-        blockDigitalPrinterDisable = ruled_params[1];
-        blockPrinterDisabledPromt = ruled_params[3];
-        }
-
-    let coverRisographPrinterDisable = false,
-        coverDigitalPrinterDisable = false,
-        coverDisable = false,
-        coverPrinterDisabledPromt = "";
-    function coverPrinterRule() {
-        var ruled_params = printerRule(orderCoverColor, orderCoverPaper);
-        coverRisographPrinterDisable = ruled_params[0];
-        coverDigitalPrinterDisable = ruled_params[1];
-        coverDisable = ruled_params[2];
-        coverPrinterDisabledPromt = ruled_params[3];
+        orderBlockPaperId: string,
+        orderCoverPaperId: string,
+        orderBlockPrinterId: string,
+        orderCoverPrinterId: string,
+        orderCoverLamination: boolean,
+        coverDisable = false;
+    async function update_order() {
+        await pb.collection("orders").update(order.id, {
+            title: orderTitle,
+            ext_order_num: orderExtOrderNum,
+            circulation: orderCirculation,
+            format: orderFormatId,
+            page_num: orderPageNum,
+            fastening: orderFasteningId,
+            block_color: orderBlockColorId,
+            cover_color: orderCoverColorId,
+            block_departure_elements: orderBlockDepartureElements,
+            cover_departure_elements: orderCoverDepartureElements,
+            block_paper: orderBlockPaperId,
+            cover_paper: orderCoverPaperId,
+            block_printer: orderBlockPrinterId,
+            cover_printer: orderCoverPrinterId,
+            cover_lamination: orderCoverLamination
+        });
+        await update_available_collections(order.id);
+        let coverPaper = await pb.collection("papers").getOne(orderCoverPaperId);
+        coverDisable = coverPaper.is_empty;
     }
 
     let reportIsFormed = false,
@@ -132,46 +101,10 @@
             collectionId: "", collectionName: "", id: "", created: "", updated: ""
         };
     async function submitOrder() {
-        const block_format_rule = await pb.collection("block_format_rules").getFirstListItem(`format.id = "${orderFormat.id}"`);
-        const block_multiplicity = block_format_rule.multiplicity;
-        const block_format = orderBlockDepartureElements ? block_format_rule.format_w_departure_elements : block_format_rule.format_wo_departure_elements;
-        
-        let cover_multiplicity,
-            cover_format;
-        if (!orderCoverPaper.is_empty) {
-            const cover_format_rule = await pb.collection("cover_format_rules").getFirstListItem(`format.id = "${orderFormat.id}" && fasterning ~ "${orderFastening.id}"`);
-            cover_multiplicity = cover_format_rule.multiplicity;
-            cover_format = orderCoverDepartureElements ? cover_format_rule.format_w_departure_elements : cover_format_rule.format_wo_departure_elements;
-        }
-
-        let order = await pb.collection("orders").create({
-            title: orderTitle,
-            ext_order_num: orderExtOrderNum,
-            circulation: orderCirculation,
-            format: orderFormat ? orderFormat.id : orderFormat,
-            page_num: orderPageNum,
-            fastening: orderFastening ? orderFastening.id : orderFastening,
-            block_color: orderBlockColor ? orderBlockColor.id : orderBlockColor,
-            cover_color: orderCoverColor ? orderCoverColor.id : orderCoverColor,
-            block_departure_elements: orderBlockDepartureElements,
-            cover_departure_elements: orderCoverDepartureElements,
-            block_paper: orderBlockPaper ? orderBlockPaper.id : orderBlockPaper,
-            cover_paper: orderCoverPaper ? orderCoverPaper.id : orderCoverPaper,
-            block_printer: orderBlockPrinter ? orderBlockPrinter.id : orderBlockPrinter,
-            cover_printer: orderCoverPrinter ? orderCoverPrinter.id : orderCoverPrinter,
-            cover_lamination: orderCoverLamination,
-            block_multiplicity: block_multiplicity,
-            block_format: block_format,
-            cover_multiplicity: cover_multiplicity,
-            cover_format: cover_format
-        });
-
-        const report_fields = await get_collection("report_fields");
+        const report_fields = await pb.collection("report_fields").getFullList({sort: "+order"});
         report_sections_fields = Map.groupBy(report_fields, ({section}) => section);
         order_report = await pb.collection("orders_reports").getOne(order.id);
-
         reportIsFormed = true;
-        document.location.href += "#order-report";
     }
 
     function saveOrderReportAsExcel() {
@@ -187,7 +120,7 @@
 <div id="typo-form" class="container">
     <h1>Калькулятор заказов типографии</h1>
     <hr>
-    <form on:submit={submitOrder}>
+    <form on:change={update_order} on:submit={submitOrder}>
         <div class="form-group">
             <label for="orderTitle">Название заказа</label>
             <input required type="text" class="form-control" id="orderTitle" placeholder="Введите название заказа" bind:value={orderTitle}>
@@ -202,64 +135,70 @@
         </div>
         <div class="form-group">
             <label for="orderFormat">Формат</label>
-            <select required class="form-control" id="orderFormat" bind:value={orderFormat} on:change={braceRule}>
+            <select required class="form-control" id="orderFormat" bind:value={orderFormatId}>
                 {#each formats as format}
-                    <option value="{format}">{format.name}</option>
+                    <option value="{format.format_id}" disabled="{!format.is_avaliable}">
+                        {format.name}{format.non_avaliable_message ? format.non_avaliable_message: ""}
+                    </option>
                 {/each}
             </select>
         </div>
         <div class="form-group">
             <label for="orderPageNum">Количество страниц</label>
-            <input required type="number" class="form-control" id="orderPageNum" placeholder="Введите количество страниц" min="1" bind:value={orderPageNum} on:input={braceRule}>
+            {#each page_nums as page_num}
+                <input required type="number" class="form-control" id="orderPageNum" placeholder="Введите количество страниц"
+                    min="{page_num.min}" max="{page_num.max}" step="{page_num.step}" bind:value={orderPageNum}
+                >
+            {/each}
         </div>
         <div class="form-group">
             <label for="orderFastening">Вид крепления</label>
-            <select required class="form-control" id="orderFastening" bind:value={orderFastening}>
+            <select required class="form-control" id="orderFastening" bind:value={orderFasteningId}>
                 {#each fastenings as fastening}
-                    <option value="{fastening}"
-                        disabled="{fastening.is_brace && braceFasteningDisabled}"
-                    >
-                        {`${fastening.name}${fastening.is_brace && braceFasteningDisabled ? braceFasteningDisabledPromt : ""}`}
+                    <option value="{fastening.fastening_id}" disabled="{!fastening.is_avaliable}">
+                        {fastening.name}{fastening.non_avaliable_message ? fastening.non_avaliable_message: ""}
                     </option>
                 {/each}
             </select>
-        </div>
+        </div>        
         <div class="row">
             <div class="col">
                 <h3>Блок</h3>
                 <hr>
                 <div class="form-group">
                     <label for="orderBlockPaper">Бумага на блок</label>
-                    <select required class="form-control" id="orderBlockPaper" bind:value={orderBlockPaper} on:change={blockPrinterRule}>
-                        {#each papers as paper}
-                            {#if paper.is_block_avaliable}
-                                <option value="{paper}">{paper.name}</option>
-                            {/if}
+                    <select required class="form-control" id="orderBlockPaper" bind:value={orderBlockPaperId}>
+                        {#each block_papers as paper}
+                            <option value="{paper.paper_id}" disabled="{!paper.is_avaliable}">
+                                {paper.name}{paper.non_avaliable_message ? paper.non_avaliable_message: ""}
+                            </option>
                         {/each}
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="orderBlockColor">Цветность блока</label>
-                    <select required class="form-control" id="orderBlockColor" bind:value={orderBlockColor} on:change={blockPrinterRule}>
-                        {#each colors as color}
-                            {#if color.is_block_avaliable}
-                                <option value="{color}">{color.name}</option>
-                            {/if}
+                    <select required class="form-control" id="orderBlockColor" bind:value={orderBlockColorId}>
+                        {#each block_colors as color}
+                            <option value="{color.color_id}" disabled="{!color.is_avaliable}">
+                                {color.name}{color.non_avaliable_message ? color.non_avaliable_message: ""}
+                            </option>
                         {/each}
                     </select>
                 </div>
                 <div class="form-check">
-                    <label class="form-check-label" for="orderBlockDepartureElements">Элементы на вылет блока</label>
-                    <input type="checkbox" class="form-check-input" id="orderBlockDepartureElements" bind:checked={orderBlockDepartureElements}>
+                    {#each block_departure_elements as block_departure_element}
+                        <label class="form-check-label" for="orderBlockDepartureElements">Элементы на вылет блока{block_departure_element.non_avaliable_message ? block_departure_element.non_avaliable_message: ""}</label>
+                        <input type="checkbox" class="form-check-input" id="orderBlockDepartureElements"
+                            disabled="{!block_departure_element.is_avaliable}" bind:checked={orderBlockDepartureElements}
+                        >
+                    {/each}
                 </div>
                 <div class="form-group">
                     <label for="orderBlockPrinter">На чём печатать блок</label>
-                    <select required class="form-control" id="orderBlockPrinter" bind:value={orderBlockPrinter}>
-                        {#each printers as printer}
-                            <option value="{printer}"
-                                disabled="{printer.is_risograph && blockRisographPrinterDisable || printer.is_digital && blockDigitalPrinterDisable}"
-                            >
-                                {`${printer.name}${printer.is_risograph && blockRisographPrinterDisable || printer.is_digital && blockDigitalPrinterDisable ? blockPrinterDisabledPromt : ""}`}
+                    <select required class="form-control" id="orderBlockPrinter" bind:value={orderBlockPrinterId}>
+                        {#each block_printers as printer}
+                            <option value="{printer.printer_id}" disabled="{!printer.is_avaliable}">
+                                {printer.name}{printer.non_avaliable_message ? printer.non_avaliable_message: ""}
                             </option>
                         {/each}
                     </select>
@@ -270,47 +209,53 @@
                 <hr>
                 <div class="form-group">
                     <label for="orderCoverPaper">Бумага на обложку</label>
-                    <select required class="form-control" id="orderCoverPaper" bind:value={orderCoverPaper} on:change={coverPrinterRule}>
-                        {#each papers as paper}
-                            {#if paper.is_cover_avaliable}
-                                <option value="{paper}">{paper.name}</option>
-                            {/if}
+                    <select required class="form-control" id="orderCoverPaper" bind:value={orderCoverPaperId}>
+                        {#each cover_papers as paper}
+                            <option value="{paper.paper_id}" disabled="{!paper.is_avaliable}">
+                                {paper.name}{paper.non_avaliable_message ? paper.non_avaliable_message: ""}
+                            </option>
                         {/each}
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="orderCoverColor">Цветность обложки</label>
-                    <select required class="form-control" id="orderCoverColor" disabled="{coverDisable}" bind:value={orderCoverColor} on:change={coverPrinterRule}>
-                        {#each colors as color}
-                            {#if color.is_cover_avaliable}
-                                <option value="{color}">{color.name}</option>
-                            {/if}
-                        {/each}
-                    </select>
-                </div>
-                <div class="form-check">
-                    <label class="form-check-label" for="orderCoverDepartureElements">Элементы на вылет обложки</label>
-                    <input type="checkbox" class="form-check-input" id="orderCoverDepartureElements" disabled="{coverDisable}" bind:checked={orderCoverDepartureElements}>
-                </div>
-                <div class="form-group">
-                    <label for="orderCoverPrinter">На чём печатать обложку</label>
-                    <select required class="form-control" id="orderCoverPrinter" disabled="{coverDisable}" bind:value={orderCoverPrinter}>
-                        {#each printers as printer}
-                            <option value="{printer}"
-                                disabled="{printer.is_risograph && coverRisographPrinterDisable || printer.is_digital && coverDigitalPrinterDisable}"
-                            >
-                                {`${printer.name}${printer.is_risograph && coverRisographPrinterDisable || printer.is_digital && coverDigitalPrinterDisable ? coverPrinterDisabledPromt : ""}`}
+                    <select required class="form-control" id="orderCoverColor" disabled="{coverDisable}" bind:value={orderCoverColorId}>
+                        {#each cover_colors as color}
+                            <option value="{color.color_id}" disabled="{!color.is_avaliable}">
+                                {color.name}{color.non_avaliable_message ? color.non_avaliable_message: ""}
                             </option>
                         {/each}
                     </select>
                 </div>
                 <div class="form-check">
-                    <label class="form-check-label" for="orderCoverLamination">Ламинация обложки</label>
-                    <input type="checkbox" class="form-check-input" id="orderCoverLamination" disabled="{coverDisable}" bind:checked={orderCoverLamination}>
+                    {#each cover_departure_elements as cover_departure_element}
+                        <label class="form-check-label" for="orderCoverDepartureElements">Элементы на вылет обложки{cover_departure_element.non_avaliable_message ? cover_departure_element.non_avaliable_message: ""}</label>
+                        <input type="checkbox" class="form-check-input" id="orderCoverDepartureElements"
+                            disabled="{!cover_departure_element.is_avaliable || coverDisable}" bind:checked={orderCoverDepartureElements}
+                        >
+                    {/each}
+                </div>
+                <div class="form-group">
+                    <label for="orderCoverPrinter">На чём печатать обложку</label>
+                    <select required class="form-control" id="orderCoverPrinter" disabled="{coverDisable}" bind:value={orderCoverPrinterId}>
+                        {#each cover_printers as printer}
+                            <option value="{printer.printer_id}" disabled="{!printer.is_avaliable}">
+                                {printer.name}{printer.non_avaliable_message ? printer.non_avaliable_message: ""}
+                            </option>
+                        {/each}
+                    </select>
+                </div>
+                <div class="form-check">
+                    {#each cover_laminations as cover_lamination}
+                        <label class="form-check-label" for="orderCoverLamination">Ламинация обложки{cover_lamination.non_avaliable_message ? cover_lamination.non_avaliable_message: ""}</label>
+                        <input type="checkbox" class="form-check-input" id="orderCoverLamination"
+                            disabled="{!cover_lamination.is_avaliable || coverDisable}" bind:checked={orderCoverLamination}
+                        >
+                    {/each}
                 </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary" disabled={reportIsFormed}>Рассчитать заказ</button>
+        <button type="submit" class="btn btn-primary">Рассчитать заказ</button>
         <button on:click={() => location.reload()} class="btn btn-warning" disabled={!reportIsFormed}>Очистить форму</button>
     </form>
 </div>
