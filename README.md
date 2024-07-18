@@ -7,7 +7,7 @@ Pocketbase приложение и svelte фронт для реализации
 ## Сборка
 
 ```bash
-docker build --push -t twobrowin/typo-form:<version> .
+docker build . --push -t twobrowin/typo-form:<version>
 ```
 
 ## Развёртывание Бота в коробке для ДОЛ "Бауманец" 2024г.
@@ -30,7 +30,7 @@ ansible-galaxy install -r requirements.yml
 ansible -i inventory.yaml all --module-name include_role --args name=bmstu.vats.ssh_connection
 ```
 
-### Запуск бота
+### Запуск
 
 ```bash
 ansible-playbook playbook.yaml -i inventory.yaml -t deploy

@@ -22,6 +22,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@svackages/set-focus": "^1.0.3",
 		"pocketbase": "^0.21.3",
 		"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
 	}
