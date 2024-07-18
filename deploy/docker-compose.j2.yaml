@@ -9,7 +9,7 @@ x-logging:
 
 services:
   {{ secrets.id }}:
-    image: twobrowin/bmstu-typo-form:1.1.0
+    image: twobrowin/bmstu-typo-form:1.2.0
     logging: *default-logging
     networks:
       - boxed-bots-proxy
