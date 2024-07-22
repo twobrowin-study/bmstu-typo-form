@@ -7,7 +7,7 @@ Pocketbase приложение и svelte фронт для реализации
 ## Сборка
 
 ```bash
-docker build . --push -t twobrowin/typo-form:<version>
+docker build . --push -t twobrowin/bmstu-typo-form:<version>
 ```
 
 ## Развёртывание Бота в коробке для ДОЛ "Бауманец" 2024г.

@@ -166,7 +166,7 @@
                 <div class="form-group">
                     <label for="orderType">Тип печати</label>
                     <select required class="form-control" id="orderType" bind:value={orderTypeId}>
-                        <option disabled selected value> -- выберете -- </option>
+                        <option disabled selected value> -- выберите -- </option>
                         {#each order_types as order_type}
                             <option value="{order_type.order_type_id}" disabled="{!order_type.is_avaliable}">
                                 {order_type.name}{order_type.non_available_message}
@@ -177,7 +177,7 @@
                 <div class="form-group">
                     <label for="orderFormat">Формат</label>
                     <select required class="form-control" id="orderFormat" bind:value={orderFormatId}>
-                        <option disabled selected value> -- выберете -- </option>
+                        <option disabled selected value> -- выберите -- </option>
                         {#each formats as format}
                             <option value="{format.format_id}" disabled="{!format.is_avaliable}">
                                 {format.name}{format.non_available_message}
@@ -189,7 +189,7 @@
                     {#each fastening_full as fastening_full_}
                         <label for="orderFastening">Вид крепления{fastening_full_.non_available_message}</label>
                         <select required class="form-control" id="orderFastening" disabled="{!fastening_full_.is_available}" bind:value={orderFasteningId}>
-                            <option disabled selected value> -- выберете -- </option>
+                            <option disabled selected value> -- выберите -- </option>
                             {#each fastenings as fastening}
                                 <option value="{fastening.fastening_id}" disabled="{!fastening.is_avaliable}">
                                     {fastening.name}{fastening.non_available_message}
@@ -209,7 +209,7 @@
                         <div class="form-group">
                             <label for="orderBlockPaper">Бумага</label>
                             <select required class="form-control" id="orderBlockPaper" bind:value={orderBlockPaperId}>
-                                <option disabled selected value> -- выберете -- </option>
+                                <option disabled selected value> -- выберите -- </option>
                                 {#each block_papers as paper}
                                     <option value="{paper.paper_id}" disabled="{!paper.is_avaliable}">
                                         {paper.name}{paper.non_available_message}
@@ -220,7 +220,7 @@
                         <div class="form-group">
                             <label for="orderBlockColor">Цветность</label>
                             <select required class="form-control" id="orderBlockColor" bind:value={orderBlockColorId}>
-                                <option disabled selected value> -- выберете -- </option>
+                                <option disabled selected value> -- выберите -- </option>
                                 {#each block_colors as color}
                                     <option value="{color.color_id}" disabled="{!color.is_avaliable}">
                                         {color.name}{color.non_available_message}
@@ -241,7 +241,7 @@
                         <div class="form-group">
                             <label for="orderBlockPrinter">На чём печатать</label>
                             <select required class="form-control" id="orderBlockPrinter" bind:value={orderBlockPrinterId}>
-                                <option disabled selected value> -- выберете -- </option>
+                                <option disabled selected value> -- выберите -- </option>
                                 {#each block_printers as printer}
                                     <option value="{printer.printer_id}" disabled="{!printer.is_avaliable}">
                                         {printer.name}{printer.non_available_message}
@@ -259,7 +259,7 @@
                     <div class="form-group">
                         <label for="orderCoverPaper">Бумага{cover_.full_non_available_message}</label>
                         <select required class="form-control" id="orderCoverPaper" disabled="{!cover_.full_is_available}" bind:value={orderCoverPaperId}>
-                            <option disabled selected value> -- выберете -- </option>
+                            <option disabled selected value> -- выберите -- </option>
                             {#each cover_papers as paper}
                                 <option value="{paper.paper_id}" disabled="{!paper.is_avaliable}">
                                     {paper.name}{paper.non_available_message}
@@ -270,7 +270,7 @@
                     <div class="form-group">
                         <label for="orderCoverColor">Цветность{cover_.non_available_message}</label>
                         <select required class="form-control" id="orderCoverColor" disabled="{!cover_.is_available}" bind:value={orderCoverColorId}>
-                            <option disabled selected value> -- выберете -- </option>
+                            <option disabled selected value> -- выберите -- </option>
                             {#each cover_colors as color}
                                 <option value="{color.color_id}" disabled="{!color.is_avaliable}">
                                     {color.name}{color.non_available_message}
@@ -291,7 +291,7 @@
                     <div class="form-group">
                         <label for="orderCoverPrinter">На чём печатать{cover_.non_available_message}</label>
                         <select required class="form-control" id="orderCoverPrinter" disabled="{!cover_.is_available}" bind:value={orderCoverPrinterId}>
-                            <option disabled selected value> -- выберете -- </option>
+                            <option disabled selected value> -- выберите -- </option>
                             {#each cover_printers as printer}
                                 <option value="{printer.printer_id}" disabled="{!printer.is_avaliable}">
                                     {printer.name}{printer.non_available_message}
@@ -302,7 +302,7 @@
                     <div class="form-group">
                         <label class="form-check-label" for="orderCoverLamination">Ламинация{cover_.non_available_message}</label>
                         <select required class="form-control" id="orderCoverLamination" disabled="{!cover_.is_available}" bind:value={orderCoverLaminationId}>
-                            <option disabled selected value> -- выберете -- </option>
+                            <option disabled selected value> -- выберите -- </option>
                             {#each cover_laminations as cover_lamination}
                                 <option value="{cover_lamination.cover_lamination_id}" disabled="{!cover_lamination.is_avaliable}">
                                     {cover_lamination.name}{cover_lamination.non_available_message}
