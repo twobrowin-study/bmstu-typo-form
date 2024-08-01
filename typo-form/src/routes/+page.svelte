@@ -9,6 +9,11 @@
     import { fade } from "svelte/transition";
     import * as XLSX from 'xlsx';
 
+    class ReportFieldsSection {
+        section!: RecordModel;
+        fields!: RecordModel[];
+    }
+
     const pb = new PocketBase(`${location.protocol}//${location.host}`);
 
     async function get_collection(order_id: string , collection_name: string, has_order: boolean): Promise<RecordModel[]> {
@@ -18,22 +23,6 @@
         }
         let selected = await pb.collection(collection_name).getList(1, 500, options);
         return selected.items;
-    }
-
-    function safeGet(map: Map<string, RecordModel[]>, key: string): RecordModel[] {
-        let res = map.get(key);
-        if (res == undefined) {
-            return []
-        }
-        return res;
-    }
-
-    function safeGetFirst(map: Map<string, RecordModel[]>, key: string): RecordModel[] {
-        let res = map.get(key);
-        if (res == undefined) {
-            return []
-        }
-        return [res[0]];
     }
 
     let order: RecordModel,
@@ -116,13 +105,27 @@
     }
 
     let reportIsFormed = false,
-        report_sections: Map<string, RecordModel[]> = new Map(),
-        report_fields: RecordModel[] = [];
+        report_fields_sections: ReportFieldsSection[] = [];
     async function submitOrder() {
-        location.href = location.href.split("#")[0] + "#orderReport";
-        report_fields = await get_collection(order.id, "reports", true);
-        report_sections = Map.groupBy(report_fields, ({section}) => section);
+        let report_sections: RecordModel[] = await pb.collection("report_sections").getFullList({sort: "+order"});
+        var report_fields_sections_tmp: ReportFieldsSection[] = [];
+        for (let i=0; i<report_sections.length; i++) {
+            let report_section = report_sections[i]
+            let retport_fields = await pb.collection("report_fields").getList(1, 500, {
+                filter: `section_id='${report_section.id}' && order_id='${order.id}'`,
+                sort: "+order"
+            });
+            let retport_fields_items = retport_fields.items;
+            if (retport_fields_items.length > 0) {
+                report_fields_sections_tmp.push({
+                    section: report_section,
+                    fields: retport_fields_items
+                });
+            }
+        }
+        report_fields_sections = report_fields_sections_tmp
         reportIsFormed = true;
+        location.href = location.href.split("#")[0] + "#orderReport";
     }
 
     function saveOrderReportAsExcel() {
@@ -155,7 +158,7 @@
                 </div>
                 <div class="form-group">
                     {#each page_nums as page_num}
-                        <label for="orderPageNum">Количество страниц{page_num.non_available_message}</label>
+                        <label for="orderPageNum">Количество страниц блока{page_num.non_available_message}</label>
                         <input required type="number" class="form-control" id="orderPageNum" placeholder="Введите количество страниц"
                             min="{page_num.min}" max="{page_num.max}" step="{page_num.step}" disabled="{!page_num.is_avaliable}" bind:value={orderPageNum}
                         >
@@ -164,7 +167,7 @@
             </div>
             <div class="col">
                 <div class="form-group">
-                    <label for="orderType">Тип печати</label>
+                    <label for="orderType">Вид изделия</label>
                     <select required class="form-control" id="orderType" bind:value={orderTypeId}>
                         <option disabled selected value> -- выберите -- </option>
                         {#each order_types as order_type}
@@ -327,23 +330,27 @@
                 <hr>
                 <table id="orderReportTable" class="table table-bordered table-hover">
                     <tbody>
-                        {#each report_sections.keys() as report_section}
+                        {#each report_fields_sections as report_fields_section}
                             <tr>
-                                <th colspan="5" style="padding-bottom: 0" class="table-secondary border-ligh">{report_section}</th>
+                                <th colspan="5" style="padding-bottom: 0" class="table-secondary border-ligh">{report_fields_section.section.name}</th>
                             </tr>
-                            {#each safeGetFirst(report_sections, report_section) as report_field}
-                                {#if report_field.units !== "" && report_field.rate !== "" && report_field.cost !== ""}
-                                    <tr>
-                                        <th>Название</th>
-                                        <th>Значение</th>
-                                        <th>Ед.измерения</th>
-                                        <th>Тариф</th>
-                                        <th>Затраты</th>
-                                    </tr>
-                                {/if}
-                            {/each}
-                            {#each safeGet(report_sections, report_section) as report_field}
-                                {#if report_field.units !== "" && report_field.rate !== "" && report_field.cost !== ""}
+                            {#if report_fields_section.section.has_units && report_fields_section.section.has_rate}
+                                <tr>
+                                    <th>Название</th>
+                                    <th>Значение</th>
+                                    <th>Ед.измерения</th>
+                                    <th>{report_fields_section.section.price_name}</th>
+                                    <th>Затраты</th>
+                                </tr>
+                            {:else if report_fields_section.section.has_units && !report_fields_section.section.has_rate}
+                            <tr>
+                                <th colspan="2">Название</th>
+                                <th colspan="2">Значение</th>
+                                <th>Ед.измерения</th>
+                            </tr>
+                            {/if}
+                            {#each report_fields_section.fields as report_field}
+                                {#if report_fields_section.section.has_units && report_fields_section.section.has_rate}
                                     <tr>
                                         <th>{report_field.name}</th>
                                         <td>{report_field.value}</td>
@@ -351,19 +358,20 @@
                                         <td>{report_field.rate}</td>
                                         <td>{report_field.cost}</td>
                                     </tr>
-                                {:else if report_field.units !== "" && report_field.rate === "" && report_field.cost === ""}
+                                {:else if report_fields_section.section.has_units && !report_fields_section.section.has_rate}
                                     <tr>
                                         <th colspan="2">{report_field.name}</th>
                                         <td colspan="2">{report_field.value}</td>
                                         <td>{report_field.units}</td>
                                     </tr>
-                                {:else if report_field.units === "" && report_field.rate === "" && report_field.cost === ""}
+                                {:else if !report_fields_section.section.has_units && !report_fields_section.section.has_rate}
                                     <tr>
                                         <th colspan="2">{report_field.name}</th>
                                         <td colspan="3">{report_field.value}</td>
                                     </tr>
                                 {/if}
                             {/each}
+                            <tr><th colspan="5"/></tr>
                         {/each}
                     </tbody>
                 </table>
