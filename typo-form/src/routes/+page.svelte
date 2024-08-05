@@ -328,7 +328,7 @@
                 <h2>Итог расчёта</h2>
                 <button class="btn btn-success btn-sm" on:click={saveOrderReportAsExcel}>Сохранить как XLSX</button>
                 <hr>
-                <table id="orderReportTable" class="table table-bordered table-hover">
+                <table id="orderReportTable" class="table table-bordered table-hover table-sm">
                     <tbody>
                         {#each report_fields_sections as report_fields_section}
                             <tr>
