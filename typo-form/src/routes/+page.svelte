@@ -157,6 +157,7 @@
     let reportIsFormed = false,
         report_fields_sections: (ReportFieldsSection|null)[] = [];
     async function submitOrder() {
+        reportIsFormed = false;
         let report_sections: RecordModel[] = await pb.collection("report_sections").getFullList({sort: "+order"});
         let materialsFullSum: number = 0,
             worksFullSum:     number = 0;
@@ -170,7 +171,7 @@
                 let retport_fields_items = retport_fields.items;
                 
                 if (report_section.id === "000006_materals") {
-                    materialsFullSum = retport_fields_items.reduce((sum, current) => sum + current.cost, 0);
+                    materialsFullSum = retport_fields_items.reduce((sum, current) => current.cost !== '' ? sum + current.cost : sum, 0);
                     retport_fields_items.push({
                         collectionId:   report_section.collection_name,
                         collectionName: report_section.collection_name,
@@ -190,7 +191,7 @@
                 }
                 
                 if (report_section.id === "000000007_works") {
-                    worksFullSum = retport_fields_items.reduce((sum, current) => sum + current.cost, 0);
+                    worksFullSum = retport_fields_items.reduce((sum, current) => current.cost !== '' ? sum + current.cost : sum, 0);
                     retport_fields_items.push({
                         collectionId:   report_section.collection_name,
                         collectionName: report_section.collection_name,
