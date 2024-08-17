@@ -85,9 +85,9 @@
         await update_available_collections(order.id);
     }
 
-    let orderCirculation: BigInt,
+    let orderCirculation: number,
         orderFormatId: string,
-        orderPageNum: BigInt,
+        orderPageNum: number,
         orderFasteningId: string,
         orderBlockColorId: string,
         orderCoverColorId: string,
@@ -221,7 +221,6 @@
         });
         report_fields_sections = await Promise.all(report_fields_sections_promices);
         let report_section_profit = report_sections.find((current) => {return current.id === "00000008_profit"});
-        let order_estimated_circulation = await pb.collection("orders_estimated_circulation").getOne(order.id);
         if (report_section_profit) {
             report_fields_sections.push({
                 section: report_section_profit,
@@ -256,7 +255,7 @@
                         value: '',
                         units: '',
                         rate:  '',
-                        cost: ((materialsFullSum+worksFullSum*7.0)/order_estimated_circulation.estimated_circulation).toFixed(0)
+                        cost: ((materialsFullSum+worksFullSum*7.0)/orderCirculation).toFixed(0)
                     }
                 ]
             });
@@ -340,27 +339,31 @@
                     </div>
                 </div>
                 <div class="col">
-                    <div class="form-group">
-                        {#each page_nums as page_num}
-                            <label for="orderPageNum">Количество страниц блока{page_num.non_available_message}</label>
-                            <input required type="number" class="form-control" id="orderPageNum" placeholder="Введите количество страниц"
-                                min="{page_num.min}" max="{page_num.max}" step="{page_num.step}" disabled="{!page_num.is_available}" bind:value={orderPageNum}
-                            >
-                        {/each}
-                    </div>
-                    <div class="form-group">
-                        {#each fastening_full as fastening_full_}
-                            <label for="orderFastening">Вид крепления{fastening_full_.non_available_message}</label>
-                            <select required class="form-control" id="orderFastening" disabled="{!fastening_full_.is_available}" bind:value={orderFasteningId}>
-                                <option disabled selected value> -- выберите -- </option>
-                                {#each fastenings as fastening}
-                                    <option value="{fastening.fastening_id}" disabled="{!fastening.is_available}">
-                                        {fastening.name}{fastening.non_available_message}
-                                    </option>
-                                {/each}
-                            </select>
-                        {/each}
-                    </div>
+                    {#each page_nums as page_num}
+                        {#if page_num.is_available}
+                            <div class="form-group">
+                                <label for="orderPageNum">Количество страниц блока{page_num.non_available_message}</label>
+                                <input required type="number" class="form-control" id="orderPageNum" placeholder="Введите количество страниц"
+                                    min="{page_num.min}" max="{page_num.max}" step="{page_num.step}" disabled="{!page_num.is_available}" bind:value={orderPageNum}
+                                >
+                            </div>
+                        {/if}
+                    {/each}
+                    {#each fastening_full as fastening_full_}
+                        {#if fastening_full_.is_available}
+                            <div class="form-group">
+                                <label for="orderFastening">Вид крепления{fastening_full_.non_available_message}</label>
+                                <select required class="form-control" id="orderFastening" disabled="{!fastening_full_.is_available}" bind:value={orderFasteningId}>
+                                    <option disabled selected value> -- выберите -- </option>
+                                    {#each fastenings as fastening}
+                                        <option value="{fastening.fastening_id}" disabled="{!fastening.is_available}">
+                                            {fastening.name}{fastening.non_available_message}
+                                        </option>
+                                    {/each}
+                                </select>
+                            </div>
+                        {/if}
+                    {/each}
                 </div>
             </div>
             <div class="row">
@@ -473,26 +476,30 @@
                                 {/each}
                             </select>
                         </div>
-                        <div class="form-check">
-                            {#each cover_folding as cover_folding_}
-                                <label class="form-check-label" for="orderCoverFolding">
-                                    Фальцовка{cover_folding_.non_available_message}{cover_.non_available_message}
-                                </label>
-                                <input type="checkbox" class="form-check-input" id="orderCoverFolding"
-                                    disabled="{!cover_folding_.is_available || !cover_.is_available}" bind:checked={orderCoverFolding}
-                                >
-                            {/each}
-                        </div>
-                        <div class="form-check">
-                            {#each cover_creasing as cover_creasing}
-                                <label class="form-check-label" for="orderCoverCreasing">
-                                    Биговка{cover_creasing.non_available_message}{cover_.non_available_message}
-                                </label>
-                                <input type="checkbox" class="form-check-input" id="orderCoverCreasing"
-                                    disabled="{!cover_creasing.is_available || !cover_.is_available}" bind:checked={orderCoverCreasing}
-                                >
-                            {/each}
-                        </div>
+                        {#each cover_folding as cover_folding_}
+                            {#if cover_folding_.is_available}
+                                <div class="form-check">
+                                    <label class="form-check-label" for="orderCoverFolding">
+                                        Фальцовка{cover_folding_.non_available_message}{cover_.non_available_message}
+                                    </label>
+                                    <input type="checkbox" class="form-check-input" id="orderCoverFolding"
+                                        disabled="{!cover_folding_.is_available || !cover_.is_available}" bind:checked={orderCoverFolding}
+                                    >
+                                </div>
+                            {/if}
+                        {/each}
+                        {#each cover_creasing as cover_creasing}
+                            {#if cover_creasing.is_available}
+                                <div class="form-check">
+                                    <label class="form-check-label" for="orderCoverCreasing">
+                                        Биговка{cover_creasing.non_available_message}{cover_.non_available_message}
+                                    </label>
+                                    <input type="checkbox" class="form-check-input" id="orderCoverCreasing"
+                                        disabled="{!cover_creasing.is_available || !cover_.is_available}" bind:checked={orderCoverCreasing}
+                                    >
+                                </div>
+                            {/if}
+                        {/each}
                     {/each}
                 </div>
             </div>
