@@ -31,6 +31,7 @@
         page_nums: RecordModel[] = [],
         fastening_full: RecordModel[] = [],
         fastenings: RecordModel[] = [],
+        sewing: RecordModel[] = [],
         block: RecordModel[] = [],
         block_papers: RecordModel[] = [],
         block_colors: RecordModel[] = [],
@@ -48,6 +49,7 @@
         formats = await get_collection(order_id, "available_formats", true);
         fastening_full = await get_collection(order_id, "available_fastening_full", false);
         fastenings = await get_collection(order_id, "available_fastenings", true);
+        sewing = await get_collection(order_id, "available_sewing", false);
         page_nums = await get_collection(order_id, "available_page_nums", false);
         block = await get_collection(order_id, "available_block", false);
         block_papers = await get_collection(order_id, "available_block_papers", true);
@@ -89,6 +91,7 @@
         orderFormatId: string,
         orderPageNum: number,
         orderFasteningId: string,
+        orderSewing: boolean,
         orderBlockColorId: string,
         orderCoverColorId: string,
         orderBlockDepartureElements: boolean,
@@ -112,6 +115,7 @@
             format: orderFormatId,
             page_num: orderPageNum,
             fastening: orderFasteningId,
+            sewing: orderSewing,
             block_color: orderBlockColorId,
             cover_color: orderCoverColorId,
             block_departure_elements: orderBlockDepartureElements,
@@ -139,6 +143,7 @@
         orderFormatId = order.format;
         orderPageNum = order.page_num;
         orderFasteningId = order.fastening;
+        orderSewing = order.sewing;
         orderBlockColorId = order.block_color;
         orderCoverColorId = order.cover_color;
         orderBlockDepartureElements = order.block_departure_elements;
@@ -186,7 +191,7 @@
                         value: '',
                         units: '',
                         rate:  '',
-                        cost: materialsFullSum.toFixed(0)
+                        cost: materialsFullSum.toFixed(1)
                     })
                 }
                 
@@ -225,6 +230,22 @@
             report_fields_sections.push({
                 section: report_section_profit,
                 fields: [
+                    {
+                        collectionId:   report_section_profit.collection_name,
+                        collectionName: report_section_profit.collection_name,
+                        created: 'none',
+                        updated: 'none',
+                        
+                        id: `${order.id}_full_summ`,
+                        order_id: order.id,
+                        section_id: report_section_profit.id,
+                        order: 400,
+                        name: 'Себестоимость',
+                        value: '',
+                        units: '',
+                        rate:  '',
+                        cost: (materialsFullSum+worksFullSum).toFixed(0)
+                    },
                     {
                         collectionId:   report_section_profit.collection_name,
                         collectionName: report_section_profit.collection_name,
@@ -364,6 +385,17 @@
                                     {/each}
                                 </select>
                             </div>
+                        {/if}
+                    {/each}
+                    {#each sewing as sewing_}
+                        {#if sewing_.is_available}
+                            <br/>
+                            <input type="checkbox" class="form-check-input" id="orderSewing"
+                                disabled="{!sewing_.is_available}" bind:checked={orderSewing}
+                            >
+                            <label class="form-check-label" for="orderSewing">
+                                Блок на нитку{sewing_.non_available_message}
+                            </label>
                         {/if}
                     {/each}
                 </div>
