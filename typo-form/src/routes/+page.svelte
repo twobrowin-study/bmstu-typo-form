@@ -282,11 +282,11 @@
             <form on:submit={createOrderOrUpdateType} id="createOrderOrUpdateType">
                 <div class="form-group">
                     <label for="orderTitle">Название заказа</label>
-                    <input required autocomplete="off" type="text" class="form-control" id="orderTitle" placeholder="Введите название заказа" bind:value={orderTitle}>
+                    <input required autocomplete="off" type="text" class="form-control form-control-sm" id="orderTitle" placeholder="Введите название заказа" bind:value={orderTitle}>
                 </div>
                 <div class="form-group">
                     <label for="orderExtOrderNum">Номер заказа</label>
-                    <input required autocomplete="off" type="text" class="form-control" id="orderExtOrderNum" placeholder="Введите номер заказа" bind:value={orderExtOrderNum}>
+                    <input required autocomplete="off" type="text" class="form-control form-control-sm" id="orderExtOrderNum" placeholder="Введите номер заказа" bind:value={orderExtOrderNum}>
                 </div>
             </form>
         </div>
@@ -294,19 +294,21 @@
             <form on:submit={loadOrderById}>
                 <div class="form-group">
                     <label for="loadOrderId">Загрузить заказ по идентификатору</label>
-                    <input required autocomplete="off" type="text" class="form-control" id="loadOrderId" placeholder="Введите идентификатор заказа" bind:value={loadOrderId}>
+                    <input required autocomplete="off" type="text" class="form-control form-control-sm" id="loadOrderId" placeholder="Введите идентификатор заказа" bind:value={loadOrderId}>
                 </div>
-                <button type="submit" class="btn btn-warning">Загрузить заказ</button>
-                <button on:click={() => location.reload()} class="btn btn-danger" disabled={!orderLoadedFromId}>Очистить форму</button>
+                <button type="submit" class="btn btn-warning btn-sm">Загрузить заказ</button>
+                <button on:click={() => location.reload()} class="btn btn-danger btn-sm" disabled={!orderLoadedFromId}>Очистить форму</button>
                 <br/>
-                <span>Учитывайте, что после загрузки заказа будет обновлена вся страница</span>
+                <span style="font-size: small;">После загрузки заказа страница будет обновлена</span>
             </form>
         </div>
+        <div class="col" />
+        <div class="col" />
     </div>
     {#each order_types as order_type}
         <button 
             type="submit"
-            class="btn btn-{orderTypeId != order_type.id ? 'primary' : 'secondary'}"
+            class="btn btn-{orderTypeId != order_type.id ? 'primary' : 'secondary'} btn-sm"
             on:click={() => {orderTypeId = order_type.id}}
             disabled="{!order_type.is_available}"
             form="createOrderOrUpdateType"
@@ -324,11 +326,11 @@
                 <div class="col">
                     <div class="form-group">
                         <label for="orderCirculation">Тираж</label>
-                        <input required autocomplete="off" type="number" class="form-control" id="orderCirculation" placeholder="Введите тираж" min="1" bind:value={orderCirculation}>
+                        <input required autocomplete="off" type="number" class="form-control form-control-sm" id="orderCirculation" placeholder="Введите тираж" min="1" bind:value={orderCirculation}>
                     </div>
                     <div class="form-group">
                         <label for="orderFormat">Формат</label>
-                        <select required class="form-control" id="orderFormat" bind:value={orderFormatId}>
+                        <select required class="form-control form-control-sm" id="orderFormat" bind:value={orderFormatId}>
                             <option disabled selected value> -- выберите -- </option>
                             {#each formats as format}
                                 <option value="{format.format_id}" disabled="{!format.is_available}">
@@ -343,7 +345,7 @@
                         {#if page_num.is_available}
                             <div class="form-group">
                                 <label for="orderPageNum">Количество страниц блока{page_num.non_available_message}</label>
-                                <input required autocomplete="off" type="number" class="form-control" id="orderPageNum" placeholder="Введите количество страниц"
+                                <input required autocomplete="off" type="number" class="form-control form-control-sm" id="orderPageNum" placeholder="Введите количество страниц"
                                     min="{page_num.min}" max="{page_num.max}" step="{page_num.step}" disabled="{!page_num.is_available}" bind:value={orderPageNum}
                                 >
                             </div>
@@ -353,7 +355,7 @@
                         {#if fastening_full_.is_available}
                             <div class="form-group">
                                 <label for="orderFastening">Вид крепления{fastening_full_.non_available_message}</label>
-                                <select required class="form-control" id="orderFastening" disabled="{!fastening_full_.is_available}" bind:value={orderFasteningId}>
+                                <select required class="form-control form-control-sm" id="orderFastening" disabled="{!fastening_full_.is_available}" bind:value={orderFasteningId}>
                                     <option disabled selected value> -- выберите -- </option>
                                     {#each fastenings as fastening}
                                         <option value="{fastening.fastening_id}" disabled="{!fastening.is_available}">
@@ -365,6 +367,9 @@
                         {/if}
                     {/each}
                 </div>
+                <div class="col" />
+                <div class="col" />
+                <div class="col" />
             </div>
             <div class="row">
                 {#each block as block_}
@@ -374,7 +379,7 @@
                             <hr>
                             <div class="form-group">
                                 <label for="orderBlockPaper">Бумага</label>
-                                <select required class="form-control" id="orderBlockPaper" bind:value={orderBlockPaperId}>
+                                <select required class="form-control form-control-sm" id="orderBlockPaper" bind:value={orderBlockPaperId}>
                                     <option disabled selected value> -- выберите -- </option>
                                     {#each block_papers as paper}
                                         <option value="{paper.paper_id}" disabled="{!paper.is_available}">
@@ -385,7 +390,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="orderBlockColor">Цветность</label>
-                                <select required class="form-control" id="orderBlockColor" bind:value={orderBlockColorId}>
+                                <select required class="form-control form-control-sm" id="orderBlockColor" bind:value={orderBlockColorId}>
                                     <option disabled selected value> -- выберите -- </option>
                                     {#each block_colors as color}
                                         <option value="{color.color_id}" disabled="{!color.is_available}">
@@ -406,7 +411,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="orderBlockPrinter">На чём печатать</label>
-                                <select required class="form-control" id="orderBlockPrinter" bind:value={orderBlockPrinterId}>
+                                <select required class="form-control form-control-sm" id="orderBlockPrinter" bind:value={orderBlockPrinterId}>
                                     <option disabled selected value> -- выберите -- </option>
                                     {#each block_printers as printer}
                                         <option value="{printer.printer_id}" disabled="{!printer.is_available}">
@@ -424,7 +429,7 @@
                         <hr>
                         <div class="form-group">
                             <label for="orderCoverPaper">Бумага{cover_.full_non_available_message}</label>
-                            <select required class="form-control" id="orderCoverPaper" disabled="{!cover_.full_is_available}" bind:value={orderCoverPaperId}>
+                            <select required class="form-control form-control-sm" id="orderCoverPaper" disabled="{!cover_.full_is_available}" bind:value={orderCoverPaperId}>
                                 <option disabled selected value> -- выберите -- </option>
                                 {#each cover_papers as paper}
                                     <option value="{paper.paper_id}" disabled="{!paper.is_available}">
@@ -435,7 +440,7 @@
                         </div>
                         <div class="form-group">
                             <label for="orderCoverColor">Цветность{cover_.non_available_message}</label>
-                            <select required class="form-control" id="orderCoverColor" disabled="{!cover_.is_available}" bind:value={orderCoverColorId}>
+                            <select required class="form-control form-control-sm" id="orderCoverColor" disabled="{!cover_.is_available}" bind:value={orderCoverColorId}>
                                 <option disabled selected value> -- выберите -- </option>
                                 {#each cover_colors as color}
                                     <option value="{color.color_id}" disabled="{!color.is_available}">
@@ -456,7 +461,7 @@
                         </div>
                         <div class="form-group">
                             <label for="orderCoverPrinter">На чём печатать{cover_.non_available_message}</label>
-                            <select required class="form-control" id="orderCoverPrinter" disabled="{!cover_.is_available}" bind:value={orderCoverPrinterId}>
+                            <select required class="form-control form-control-sm" id="orderCoverPrinter" disabled="{!cover_.is_available}" bind:value={orderCoverPrinterId}>
                                 <option disabled selected value> -- выберите -- </option>
                                 {#each cover_printers as printer}
                                     <option value="{printer.printer_id}" disabled="{!printer.is_available}">
@@ -467,7 +472,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-check-label" for="orderCoverLamination">Ламинация{cover_.non_available_message}</label>
-                            <select required class="form-control" id="orderCoverLamination" disabled="{!cover_.is_available}" bind:value={orderCoverLaminationId}>
+                            <select required class="form-control form-control-sm" id="orderCoverLamination" disabled="{!cover_.is_available}" bind:value={orderCoverLaminationId}>
                                 <option disabled selected value> -- выберите -- </option>
                                 {#each cover_laminations as cover_lamination}
                                     <option value="{cover_lamination.cover_lamination_id}" disabled="{!cover_lamination.is_available}">
@@ -502,9 +507,12 @@
                         {/each}
                     {/each}
                 </div>
+                <div class="col" />
+                <div class="col" />
+                <div class="col" />
             </div>
-            <button type="submit" class="btn btn-primary">Рассчитать заказ</button>
-            <button on:click={() => location.reload()} class="btn btn-warning" disabled={!reportIsFormed}>Очистить форму</button>
+            <button type="submit" class="btn btn-primary btn-sm">Рассчитать заказ</button>
+            <button on:click={() => location.reload()} class="btn btn-warning btn-sm" disabled={!reportIsFormed}>Очистить форму</button>
         </form>
     </div>
 {/if}
