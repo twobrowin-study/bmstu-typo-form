@@ -1,0 +1,14 @@
+container:
+  image: twobrowin/bmstu-typo-form:1.6.1-nomigrations
+  imagePullPolicy: IfNotPresent
+  containerPort: 8080
+  dataPath: /pb/pb_data
+
+  env:
+  - name: TZ
+    value: Europe/Moscow
+
+ingress:
+  host: boxed-bots.ru
+  entryPoints:
+    - typo-web

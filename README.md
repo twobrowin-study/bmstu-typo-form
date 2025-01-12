@@ -10,30 +10,12 @@ Pocketbase приложение и svelte фронт для реализации
 docker build . --push -t twobrowin/bmstu-typo-form:<version>
 ```
 
-## Развёртывание страницы калькулятора типографии МГТУ им. Баумана
-
-### Предвариательные требования
-
-Установить коллекцию vats:
-```bash
-ansible-galaxy install -r deploy/requirements.yml
-```
-
-### Доступ по ssh
-
-После подготовки возможно получить доступ к машинам при помощи команды:
-```bash
-ansible -i deploy/inventory.yaml all --module-name include_role --args name=bmstu.vats.ssh_connection
-```
-
-### Запуск
+## Развёртывание
 
 ```bash
-ansible-playbook deploy/playbook.yaml -i deploy/inventory.yaml -t deploy
+helm upgrade --install --debug -n public bmstu-typo-v1 ./charts
 ```
 
-### Добавление параметров Nginx
+## Зависимости k8s
 
-```bash
-ansible-playbook deploy/playbook.yaml -i deploy/inventory.yaml -t nginx_config
-```
+Следует создать неймспейс `public`

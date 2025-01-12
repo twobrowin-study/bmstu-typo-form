@@ -1,4 +1,4 @@
-FROM node:22-slim as front-build
+FROM node:22-slim AS front-build
 
 WORKDIR /app
 
@@ -18,7 +18,6 @@ RUN apk add --no-cache \
 ADD https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_linux_amd64.zip /tmp/pb.zip
 RUN unzip /tmp/pb.zip -d /pb/
 
-COPY ./pb_migrations /pb/pb_migrations
 COPY --from=front-build /app/build /pb/pb_public
 
 VOLUME ["/pb/pb_data"]

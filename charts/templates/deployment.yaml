@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: {{ .Values.container.image }}
+        imagePullPolicy: {{ .Values.container.imagePullPolicy }}
+
+        env:
+        {{ .Values.container.env | toYaml | nindent 8 | trim }}
+
+        ports:
+        - containerPort: {{ .Values.container.containerPort }}
+          name: service
+        
+        volumeMounts:
+        - mountPath: {{ .Values.container.dataPath }}
+          name: {{ .Chart.Name }}
+
+      volumes:
+      - name: {{ .Chart.Name }}
+        persistentVolumeClaim:
+          claimName: {{ .Chart.Name }}
