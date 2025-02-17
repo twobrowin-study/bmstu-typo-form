@@ -3,9 +3,9 @@
 </svelte:head>
 
 <script lang="ts">
-    import { onMount } from "svelte";
+    import type { RecordListOptions, RecordModel } from "pocketbase";
     import PocketBase from "pocketbase";
-    import type { RecordModel, RecordListOptions } from "pocketbase";
+    import { onMount } from "svelte";
     import { fade } from "svelte/transition";
     import * as XLSX from 'xlsx';
 
@@ -287,8 +287,9 @@
 
     function saveOrderReportAsExcel() {
         const table = document.getElementById("orderReportTable");
-        const tableName = `${orderExtOrderNum}-${orderTitle}`
-        const wb = XLSX.utils.table_to_book(table, {sheet: orderExtOrderNum});
+        const tableName = `${orderExtOrderNum}-${orderTitle}`.replaceAll(/[\:\\\/\?\*\[\]]/g, "_")
+        console.log(`Downloading table with name ${tableName}`)
+        const wb = XLSX.utils.table_to_book(table, {sheet: orderExtOrderNum.replaceAll(/[\:\\\/\?\*\[\]]/g, "_")});
         const ws = wb.Sheets[wb.SheetNames[0]];
         ws['!cols']?.push({ width: 45 }, { width: 20 }, { width: 30 });
         XLSX.writeFile(wb, `${tableName}.xlsx`, {cellStyles: true});
