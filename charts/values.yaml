@@ -1,5 +1,5 @@
 container:
-  image: twobrowin/bmstu-typo-form:1.6.2-rc2
+  image: twobrowin/bmstu-typo-form:1.7.0-rc0
   imagePullPolicy: IfNotPresent
   containerPort: 8080
   dataPath: /pb/pb_data

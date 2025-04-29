@@ -37,6 +37,7 @@
         block_colors: RecordModel[] = [],
         block_departure_elements: RecordModel[] = [],
         block_printers: RecordModel[] = [],
+        block_subject_texts: RecordModel[] = [],
         cover: RecordModel[] = [],
         cover_papers: RecordModel[] = [],
         cover_colors: RecordModel[] = [],
@@ -56,6 +57,7 @@
         block_colors = await get_collection(order_id, "available_block_colors", true);
         block_departure_elements = await get_collection(order_id, "available_block_departure_elements", false);
         block_printers = await get_collection(order_id, "available_block_printers", true);
+        block_subject_texts = await get_collection(order_id, "available_block_subject_text", false);
         cover = await get_collection(order_id, "available_cover", false);
         cover_papers = await get_collection(order_id, "available_cover_papers", true);
         cover_colors = await get_collection(order_id, "available_cover_colors", true);
@@ -102,7 +104,8 @@
         orderCoverPrinterId: string,
         orderCoverLaminationId: string,
         orderCoverCreasing: boolean,
-        orderCoverFolding: boolean;
+        orderCoverFolding: boolean,
+        orderBlockSubjectText: boolean = true;
     async function updateOrder() {
         if (!order) {
             return
@@ -126,7 +129,8 @@
             cover_printer: orderCoverPrinterId,
             cover_lamination: orderCoverLaminationId,
             cover_creasing: orderCoverCreasing,
-            cover_folding: orderCoverFolding
+            cover_folding: orderCoverFolding,
+            block_subject_text: orderBlockSubjectText
         });
         await update_available_collections(order.id);
     }
@@ -155,6 +159,7 @@
         orderCoverLaminationId = order.cover_lamination;
         orderCoverCreasing = order.cover_creasing;
         orderCoverFolding = order.cover_folding;
+        orderBlockSubjectText = order.block_subject_text;
         await update_available_collections(order.id);
         submitOrder();
     }
@@ -256,11 +261,11 @@
                         order_id: order.id,
                         section_id: report_section_profit.id,
                         order: 400,
-                        name: 'Общая стоимость',
+                        name: 'Себестоимость университет',
                         value: '',
                         units: '',
                         rate:  '',
-                        cost: (materialsFullSum+worksFullSum*7).toFixed(0)
+                        cost: (materialsFullSum+worksFullSum*2).toFixed(0)
                     },
                     {
                         collectionId:   report_section_profit.collection_name,
@@ -276,7 +281,7 @@
                         value: '',
                         units: '',
                         rate:  '',
-                        cost: ((materialsFullSum+worksFullSum*7.0)/orderCirculation).toFixed(0)
+                        cost: ((materialsFullSum+worksFullSum*2.0)/orderCirculation).toFixed(0)
                     }
                 ]
             });
@@ -452,6 +457,18 @@
                                         </option>
                                     {/each}
                                 </select>
+                            </div>
+                            <div class="form-check">
+                                {#each block_subject_texts as block_subject_text}
+                                    {#if block_subject_text.is_available && block_.is_available}
+                                        <label class="form-check-label" for="orderBlockSubjectText">
+                                            Сюжет текст/фото{block_subject_text.non_available_message}
+                                        </label>
+                                        <input type="checkbox" class="form-check-input" id="orderBlockSubjectText"
+                                            disabled="{!block_subject_text.is_available || !block_.is_available}" bind:checked={orderBlockSubjectText}
+                                        >
+                                    {/if}
+                                {/each}
                             </div>
                         </div>
                     {/if}
