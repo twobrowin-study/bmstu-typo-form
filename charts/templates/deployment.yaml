@@ -30,6 +30,15 @@ spec:
         volumeMounts:
         - mountPath: {{ .Values.container.dataPath }}
           name: {{ .Chart.Name }}
+        
+        resources:
+          requests:
+            cpu: {{ .Values.container.resources.requests.cpu }}
+            memory: {{ .Values.container.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.container.resources.limits.cpu }}
+            memory: {{ .Values.container.resources.limits.memory }}
+
 
       volumes:
       - name: {{ .Chart.Name }}

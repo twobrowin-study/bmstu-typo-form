@@ -7,6 +7,14 @@ container:
   env:
   - name: TZ
     value: Europe/Moscow
+  
+  resources:
+    requests:
+      cpu: 100m
+      memory: 100M
+    limits:
+      cpu: 200m
+      memory: 200M
 
 ingress:
   host: boxed-bots.ru
