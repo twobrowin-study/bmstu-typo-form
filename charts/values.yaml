@@ -13,8 +13,8 @@ container:
       cpu: 100m
       memory: 100M
     limits:
-      cpu: 200m
-      memory: 200M
+      cpu: 1
+      memory: 1G
 
 ingress:
   host: boxed-bots.ru
