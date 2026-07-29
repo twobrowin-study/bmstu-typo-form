@@ -17,6 +17,5 @@ container:
       memory: 1G
 
 ingress:
-  host: boxed-bots.ru
-  entryPoints:
-    - typo-web
+  host: typo.boxed-bots.ru
+  hostTypoWeb: boxed-bots.ru

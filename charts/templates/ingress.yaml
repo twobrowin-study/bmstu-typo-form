@@ -4,7 +4,9 @@ metadata:
   name: {{ .Chart.Name }}
   namespace: {{ .Release.Namespace }}
 spec:
-  entryPoints: {{ .Values.ingress.entryPoints }}
+  entryPoints:
+    - web
+    - websecure
   routes:
     - kind: Rule
       match: Host(`{{ .Values.ingress.host }}`)
@@ -12,5 +14,36 @@ spec:
         - kind: Service
           name: {{ .Chart.Name }}
           port: 80
-  tls:
-    certResolver: le
+###
+# TODO: Удалить роутеры ниже
+###
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Chart.Name }}-redirect
+  namespace: {{ .Release.Namespace }}
+spec:
+  redirectRegex:
+    regex: ^https?://{{ .Values.ingress.hostTypoWeb }}:8080/(.*)$
+    replacement: https://{{ .Values.ingress.host }}/${1}
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Chart.Name }}-typo-web-route
+  namespace: {{ .Release.Namespace }}
+spec:
+  entryPoints:
+    - typo-web
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.ingress.hostTypoWeb }}`)
+      middlewares:
+        - name: {{ .Chart.Name }}-redirect
+          namespace: {{ .Release.Namespace }}
+      services:
+        - kind: Service
+          name: {{ .Chart.Name }}
+          port: 80
